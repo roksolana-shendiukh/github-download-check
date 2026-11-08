@@ -9,12 +9,6 @@ jobs:
     steps:
       - name: Download the same files from a clean runner
         run: |
-          release=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" \
-            https://api.github.com/repos/databricks/cli/releases/tags/v0.296.1)
-          asset_url=$(echo "$release" | jq -r '.assets[] | select(.name == "databricks_cli_0.296.1_linux_amd64.zip") | .url')
-          echo "asset API URL: $asset_url"
-          curl -sS -L -o cli.zip -w "%{http_code} in %{time_total}s  download through the API\n" \
-            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/octet-stream" "$asset_url" || true
-          ls -l cli.zip || true
-        env:
-          GH_TOKEN: ${{ github.token }}
+          docker pull ghcr.io/databricks/cli:v0.296.1
+          docker run --rm --entrypoint sh ghcr.io/databricks/cli:v0.296.1 -c \
+            'databricks --version; env | grep -i "^DATABRICKS_TF" || true; ls -R /app 2>/dev/null | head -20 || true'
