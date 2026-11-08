@@ -1,0 +1,19 @@
+name: download-check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the same files from a clean runner
+        run: |
+          for url in \
+            https://github.com/databricks/cli/releases/download/v0.296.1/databricks_cli_0.296.1_linux_amd64.zip \
+            https://github.com/cli/cli/releases/download/v2.60.0/gh_2.60.0_checksums.txt \
+            https://github.com/databricks/cli \
+            https://api.github.com/repos/databricks/cli/releases/latest
+          do
+            curl -sS -o /dev/null -L -w "%{http_code} in %{time_total}s  $url\n" "$url" || true
+          done
