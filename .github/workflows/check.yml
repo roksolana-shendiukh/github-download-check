@@ -9,6 +9,16 @@ jobs:
     steps:
       - name: Download the same files from a clean runner
         run: |
-          docker pull ghcr.io/databricks/cli:v0.296.1
-          docker run --rm --entrypoint sh ghcr.io/databricks/cli:v0.296.1 -c \
-            'databricks --version; env | grep -i "^DATABRICKS_TF" || true; ls -R /app 2>/dev/null | head -20 || true'
+          token=$(curl -fsSL "https://ghcr.io/token?scope=repository:databricks/cli:pull" | jq -r .token)
+          curl -fsSL -H "Authorization: Bearer $token" "https://ghcr.io/v2/databricks/cli/tags/list?n=1000" \
+            | jq -r '.tags[]' | grep -E '^v?0\.29|^v?1\.' | sort -V | tail -30
+          for tag in 0.296.1 v0.296.1 latest; do
+            if docker pull -q "ghcr.io/databricks/cli:$tag" > /dev/null 2>&1; then
+              echo "pulled: $tag"
+              docker run --rm --entrypoint sh "ghcr.io/databricks/cli:$tag" -c \
+                'databricks --version; env | grep -i "^DATABRICKS_TF" || true'
+              break
+            else
+              echo "not found: $tag"
+            fi
+          done
